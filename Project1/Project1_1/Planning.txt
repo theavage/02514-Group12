@@ -1,0 +1,20 @@
++ Architecture Options:
+	- ResNet (made by us), ResNet50, EfficientNetB7, Custom made CNN.
+
++  Optimizers:
+	- SGD, momentum, RMSProp, adam, (Newton's method).
+
++ Data Augmentation --> Rotations mainly, etc.
+
++ Apply Batch Normalization.
+
++ Apply Transfer learning, dropouts.
+
++ Obtain saliency maps + images with prediction/true.
+
++ Discussion --> How we trained, are there patterns in wrongly classified images? how to improve?
+
+
+Links of interest:
+
+https://ml-cheatsheet.readthedocs.io/en/latest/optimizers.html
