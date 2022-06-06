@@ -45,3 +45,51 @@ for i in range(21):
     plt.imshow(np.swapaxes(np.swapaxes(images[i].numpy(), 0, 2), 0, 1))
     plt.title(['hotdog', 'not hotdog'][labels[i].item()])
     plt.axis('off')
+
+#Loading model 
+
+model = cnn
+model.to(device)
+
+#Initialize the optimizer
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+
+#Get the first minibatch
+data = next(iter(train_loader))[0].cuda()
+#Try running the model on a minibatch
+print('Shape of the output from the convolutional part', model.convolutional(data).shape)
+model(data); #if this runs the model dimensions fit
+
+num_epochs = 5
+
+for epoch in tqdm(range(num_epochs), unit='epoch'):
+    #For each epoch
+    train_correct = 0
+    for minibatch_no, (data, target) in tqdm(enumerate(train_loader), total=len(train_loader)):
+        data, target = data.to(device), target.to(device)
+        #Zero the gradients computed for each weight
+        optimizer.zero_grad()
+        #Forward pass your image through the network
+        output = model(data)
+        #Compute the loss
+        loss = F.nll_loss(torch.log(output), target)
+        #Backward pass through the network
+        loss.backward()
+        #Update the weights
+        optimizer.step()
+        
+        #Compute how many were correctly classified
+        predicted = output.argmax(1)
+        train_correct += (target==predicted).sum().cpu().item()
+        
+    #Comput the test accuracy
+    test_correct = 0
+    for data, target in test_loader:
+        data = data.to(device)
+        with torch.no_grad():
+            output = model(data)
+        predicted = output.argmax(1).cpu()
+        test_correct += (target==predicted).sum().item()
+    train_acc = train_correct/len(trainset)
+    test_acc = test_correct/len(testset)
+    print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
