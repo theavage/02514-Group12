@@ -1,4 +1,9 @@
-#Data loading
+import os
+import glob
+import PIL.Image as Image
+import torch
+
+
 class Hotdog_NotHotdog(torch.utils.data.Dataset):
     def __init__(self, train, transform, data_path='/dtu/datasets1/02514/hotdog_nothotdog'):
         'Initialization'
@@ -23,23 +28,3 @@ class Hotdog_NotHotdog(torch.utils.data.Dataset):
         X = self.transform(image)
         return X, y
 
-size = 128
-train_transform = transforms.Compose([transforms.Resize((size, size)), 
-                                    transforms.ToTensor()])
-test_transform = transforms.Compose([transforms.Resize((size, size)), 
-                                    transforms.ToTensor()])
-
-batch_size = 64
-trainset = Hotdog_NotHotdog(train=True, transform=train_transform)
-train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=3)
-testset = Hotdog_NotHotdog(train=False, transform=test_transform)
-test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=3)
-
-images, labels = next(iter(train_loader))
-plt.figure(figsize=(20,10))
-
-for i in range(21):
-    plt.subplot(5,7,i+1)
-    plt.imshow(np.swapaxes(np.swapaxes(images[i].numpy(), 0, 2), 0, 1))
-    plt.title(['hotdog', 'not hotdog'][labels[i].item()])
-    plt.axis('off')
