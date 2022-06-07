@@ -106,7 +106,7 @@ def trainNet(model, num_epochs, optimizer, train_loader, test_loader,trainset,te
         test_acc = test_correct/len(testset)
         print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
 
-        return model, train_acc, test_acc
+    return model, train_acc, test_acc
 
 
 def results(device, test_loader):
