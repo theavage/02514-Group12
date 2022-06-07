@@ -127,7 +127,7 @@ def trainNet(model, num_epochs, optimizer, train_loader, test_loader,trainset,te
             data = data.to(device)
             with torch.no_grad():
                 output = model(data)
-            test_loss.append(loss_fun(output, target).cpu().item())
+            test_loss.append(F.nll_loss(torch.log(output), target).cpu().item())
             predicted = output.argmax(1).cpu()
             test_correct += (target==predicted).sum().item()
 
