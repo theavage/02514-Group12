@@ -85,7 +85,7 @@ class Hotdog_NotHotdog(torch.utils.data.Dataset):
         return X, y
 
 
-def trainNet(model, num_epochs, optimizer, train_loader, test_loader,trainset,testset, device):
+def trainNet(model, num_epochs, optimizer, criterion, train_loader, test_loader,trainset,testset, device):
 
     out_dict = {'train_acc': [],
               'test_acc': [],
@@ -109,7 +109,7 @@ def trainNet(model, num_epochs, optimizer, train_loader, test_loader,trainset,te
             #Forward pass your image through the network
             output = model(data)
             #Compute the loss
-            loss = F.nll_loss(torch.log(output), target)
+            loss = criterion(output, target)
             #Backward pass through the network
             loss.backward()
             #Update the weights
@@ -127,7 +127,7 @@ def trainNet(model, num_epochs, optimizer, train_loader, test_loader,trainset,te
             data = data.to(device)
             with torch.no_grad():
                 output = model(data)
-            test_loss.append(F.nll_loss(torch.log(output), target).cpu().item())
+            test_loss.append(criterion(output, target).cpu().item())
             predicted = output.argmax(1).cpu()
             test_correct += (target==predicted).sum().item()
 

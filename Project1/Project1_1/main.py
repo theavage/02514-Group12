@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 
 from HotDogUtils import checkDevice, loadHotDogData, loadHotDogData, showHotDogData, trainNet, saliency_map, plot_graphs
 from HotDogModels import resnet50, cnn, EfficientNetB7
@@ -29,8 +30,11 @@ momentum = torch.optim.SGD(model.parameters(), lr=0.1, momentum=1)
 rmsprop = torch.optim.RMSprop(model.parameters(), lr=0.1)
 adam = torch.optim.Adam(model.parameters(), lr=0.1)
 
+# Loss Functions
+criterion = nn.CrossEntropyLoss()
+
 # Train model
-model, out_dict = trainNet(model, 5, sgd, train_loader, test_loader,trainset,testset, device)
+model, out_dict = trainNet(model, 5, sgd, criterion, train_loader, test_loader,trainset,testset, device)
 torch.save(model, model_path)
 
 plot_graphs(out_dict)
