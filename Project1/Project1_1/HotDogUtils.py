@@ -99,6 +99,7 @@ def trainNet(model, num_epochs, optimizer, criterion, train_loader, test_loader,
     # model(data); #if this runs the model dimensions fit
 
     for _ in tqdm(range(num_epochs), unit='epoch'):
+        model.train()
         #For each epoch
         train_correct = 0
         train_loss = []
@@ -123,26 +124,31 @@ def trainNet(model, num_epochs, optimizer, criterion, train_loader, test_loader,
         #Comput the test accuracy
         test_loss = []
         test_correct = 0
+        model.eval()
         for data, target in test_loader:
-            data = data.to(device)
+            data, target = data.to(device), target.to(device)
             with torch.no_grad():
                 output = model(data)
-            test_loss.append(criterion(output, target).cpu().item())
-            predicted = output.argmax(1).cpu()
-            test_correct += (target==predicted).sum().item()
+            test_loss.append(criterion(output, target).item())
+            predicted = output.argmax(1)
+            test_correct += (target==predicted).sum().cpu().item()
 
         out_dict['train_acc'].append(train_correct/len(trainset))
         out_dict['test_acc'].append(test_correct/len(testset))
         out_dict['train_loss'].append(np.mean(train_loss))
         out_dict['test_loss'].append(np.mean(test_loss))
         print(f"Loss train: {np.mean(train_loss):.3f}\t test: {np.mean(test_loss):.3f}\t",
-              f"Accuracy train: {out_dict['train_acc'][-1]*100:.1f}%\t test: {out_dict['test_acc'][-1]*100:.1f}%")
+             f"Accuracy train: {out_dict['train_acc'][-1]*100:.1f}%\t test: {out_dict['test_acc'][-1]*100:.1f}%")
 
+        '''train_acc = train_correct/len(trainset)
+        test_acc = test_correct/len(testset)
+        print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
+        '''
     
     return model, out_dict
 
 
-def plot_graphs(out_dict):
+def plot_graphs(out_dict, name):
 
     plt.plot(out_dict['train_loss'],'-o')
     plt.plot(out_dict['train_acc'],'-o')
@@ -150,7 +156,7 @@ def plot_graphs(out_dict):
     plt.xlabel('Epoch number')
     plt.ylabel('Accuracy')
     plt.show()
-    plt.savefig('images/train.png')
+    plt.savefig("images/train_" + name + ".png")
 
     plt.plot(out_dict['test_loss'],'-o')
     plt.plot(out_dict['test_acc'],'-o')
@@ -158,7 +164,7 @@ def plot_graphs(out_dict):
     plt.xlabel('Epoch number')
     plt.ylabel('Accuracy')
     plt.show()
-    plt.savefig('images/test.png')
+    plt.savefig("images/test_" + name + ".png")
 
 
 def saliency_map(device, test_loader, model_path):

@@ -7,7 +7,11 @@ from HotDogModels import resnet50, cnn, EfficientNetB7
 SHOW_RESULTS = False
 isAugmented = False
 
-model_path = "models/modelBLABLABLA.pt"
+name = "modelBLABLABLA.pt"
+# ARCHITECTURE_OPTIMIZER_LOSS_EPOCHS_DA_BN.pt
+path = "models/"
+model_path = path + name
+
 
 # Check if we run on GPU
 device = checkDevice()
@@ -20,9 +24,11 @@ train_loader, test_loader, trainset, testset = loadHotDogData(128, 64, isAugment
 showHotDogData(train_loader)
 
 # Load model
-model = EfficientNetB7
+model = resnet50
 model = model()
 model.to(device)
+
+print(model)
 
 # Optimizers
 sgd = torch.optim.SGD(model.parameters(), lr=0.1)
@@ -34,10 +40,10 @@ adam = torch.optim.Adam(model.parameters(), lr=0.1)
 criterion = nn.CrossEntropyLoss()
 
 # Train model
-model, out_dict = trainNet(model, 5, sgd, criterion, train_loader, test_loader,trainset,testset, device)
+model, out_dict = trainNet(model, 10, sgd, criterion, train_loader, test_loader,trainset,testset, device)
 torch.save(model, model_path)
 
-plot_graphs(out_dict)
+plot_graphs(out_dict, name)
 
 if(SHOW_RESULTS):
     saliency_map(device, test_loader, model_path)
