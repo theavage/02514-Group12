@@ -30,6 +30,7 @@ def showHotDogData(train_loader):
         plt.title(['hotdog', 'not hotdog'][labels[i].item()])
         plt.axis('off')
 
+
 def augmentedTransform(size):
     train_transform = transforms.Compose([
                                         transforms.Resize((size, size)),
@@ -86,6 +87,11 @@ class Hotdog_NotHotdog(torch.utils.data.Dataset):
 
 def trainNet(model, num_epochs, optimizer, train_loader, test_loader,trainset,testset, device):
 
+    out_dict = {'train_acc': [],
+              'test_acc': [],
+              'train_loss': [],
+              'test_loss': []}
+
     # #Get the first minibatch
     # data = next(iter(train_loader))[0].cuda()
     # #Try running the model on a minibatch
@@ -95,6 +101,7 @@ def trainNet(model, num_epochs, optimizer, train_loader, test_loader,trainset,te
     for _ in tqdm(range(num_epochs), unit='epoch'):
         #For each epoch
         train_correct = 0
+        train_loss = []
         for _, (data, target) in tqdm(enumerate(train_loader), total=len(train_loader)):
             data, target = data.to(device), target.to(device)
             #Zero the gradients computed for each weight
@@ -108,29 +115,55 @@ def trainNet(model, num_epochs, optimizer, train_loader, test_loader,trainset,te
             #Update the weights
             optimizer.step()
             
+            train_loss.append(loss.item())
             #Compute how many were correctly classified
             predicted = output.argmax(1)
             train_correct += (target==predicted).sum().cpu().item()
             
         #Comput the test accuracy
+        test_loss = []
         test_correct = 0
         for data, target in test_loader:
             data = data.to(device)
             with torch.no_grad():
                 output = model(data)
+            test_loss.append(loss_fun(output, target).cpu().item())
             predicted = output.argmax(1).cpu()
             test_correct += (target==predicted).sum().item()
 
-        train_acc = train_correct/len(trainset)
-        test_acc = test_correct/len(testset)
-        print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
+        out_dict['train_acc'].append(train_correct/len(trainset))
+        out_dict['test_acc'].append(test_correct/len(testset))
+        out_dict['train_loss'].append(np.mean(train_loss))
+        out_dict['test_loss'].append(np.mean(test_loss))
+        print(f"Loss train: {np.mean(train_loss):.3f}\t test: {np.mean(test_loss):.3f}\t",
+              f"Accuracy train: {out_dict['train_acc'][-1]*100:.1f}%\t test: {out_dict['test_acc'][-1]*100:.1f}%")
 
-    return model, train_acc, test_acc
+    
+    return model, out_dict
 
 
-def results(device, test_loader):
+def plot_graphs(out_dict):
 
-    model = torch.load('Models/BLABLABLA.pth')
+    plt.plot(out_dict['train_loss'],'-o')
+    plt.plot(out_dict['train_acc'],'-o')
+    plt.legend(('Train error','Train accuracy'))
+    plt.xlabel('Epoch number')
+    plt.ylabel('Accuracy')
+    plt.show()
+    plt.savefig('images/train.png')
+
+    plt.plot(out_dict['test_loss'],'-o')
+    plt.plot(out_dict['test_acc'],'-o')
+    plt.legend(('Test error','Test accuracy'))
+    plt.xlabel('Epoch number')
+    plt.ylabel('Accuracy')
+    plt.show()
+    plt.savefig('images/test.png')
+
+
+def saliency_map(device, test_loader, model_path):
+
+    model = torch.load(model_path)
     model = model.to(device)
 
     model.eval()
@@ -166,3 +199,4 @@ def results(device, test_loader):
     plt.tight_layout()
     fig.suptitle('The Image and Its Saliency Map')
     plt.show()
+
