@@ -4,7 +4,6 @@ import torch.nn as nn
 
 def EfficientNetB7():
 
-    # OPTION 1
     #model = EfficientNet.from_name('efficientnet-b7')
     model = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=False)
     num_classes =1
