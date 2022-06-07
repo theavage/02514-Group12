@@ -1,4 +1,3 @@
-from fcntl import F_SEAL_SEAL
 import torch
 from efficientnet_pytorch import EfficientNet
 import torch.nn as nn

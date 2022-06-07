@@ -1,3 +1,4 @@
+from cgi import test
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
@@ -35,7 +36,7 @@ def loadHotDogData(size, batch_size):
     train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=3)
     testset = Hotdog_NotHotdog(train=False, transform=test_transform)
     test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=3)
-    return train_loader, test_loader
+    return train_loader, test_loader, trainset, testset
 
 class Hotdog_NotHotdog(torch.utils.data.Dataset):
     def __init__(self, train, transform, data_path='/dtu/datasets1/02514/hotdog_nothotdog'):
@@ -62,7 +63,7 @@ class Hotdog_NotHotdog(torch.utils.data.Dataset):
         return X, y
 
 
-def trainNet(model, num_epochs, optimizer, train_loader, test_loader, device):
+def trainNet(model, num_epochs, optimizer, train_loader, test_loader,trainset,testset, device):
 
     # #Get the first minibatch
     # data = next(iter(train_loader))[0].cuda()
@@ -99,8 +100,8 @@ def trainNet(model, num_epochs, optimizer, train_loader, test_loader, device):
             predicted = output.argmax(1).cpu()
             test_correct += (target==predicted).sum().item()
 
-        train_acc = train_correct/train_loader.__len__
-        test_acc = test_correct/test_loader.__len__
+        train_acc = train_correct/len(trainset)
+        test_acc = test_correct/len(testset)
         print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
 
         return model, train_acc, test_acc
