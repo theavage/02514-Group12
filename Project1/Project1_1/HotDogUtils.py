@@ -9,6 +9,8 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 from tqdm.notebook import tqdm
+from random import randint
+
 
 def checkDevice():
     if torch.cuda.is_available():
@@ -123,4 +125,44 @@ def trainNet(model, num_epochs, optimizer, train_loader, test_loader,trainset,te
         test_acc = test_correct/len(testset)
         print("Accuracy train: {train:.1f}%\t test: {test:.1f}%".format(test=100*test_acc, train=100*train_acc))
 
-        return model, train_acc, test_acc
+    return model, train_acc, test_acc
+
+
+def results(device, test_loader):
+
+    model = torch.load('Models/BLABLABLA.pth')
+    model = model.to(device)
+
+    model.eval()
+
+    i = randint(0, 10)
+    print("Chosen image ", i, "from the test set")
+    images, labels = next(iter(test_loader))
+    image = images[i]
+
+    image = image.to(device)
+    image.requires_grad_()
+
+
+    output = model(image)
+    # Catch the output
+    output_idx = output.argmax()
+    output_max = output[0, output_idx]
+
+    # Do backpropagation to get the derivative of the output based on the image
+    output_max.backward()
+
+    #Retireve the saliency map and also pick the maximum value from channels on each pixel.
+    saliency, _ = torch.max(image.grad.data.abs(), dim=1) 
+    #saliency = saliency.reshape(128, 128)
+
+
+    # Visualize the image and the saliency map
+    fig, ax = plt.subplots(1, 2)
+    ax[0].imshow(image.cpu().detach().numpy().transpose(1, 2, 0))
+    ax[0].axis('off')
+    ax[1].imshow(saliency.cpu(), cmap='hot')
+    ax[1].axis('off')
+    plt.tight_layout()
+    fig.suptitle('The Image and Its Saliency Map')
+    plt.show()

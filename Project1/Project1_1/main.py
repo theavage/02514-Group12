@@ -1,12 +1,9 @@
 import torch
 
-from HotDogUtils import checkDevice, loadHotDogData, loadHotDogData, showHotDogData, trainNet
-# from HotDogModels import ...
+from HotDogUtils import checkDevice, loadHotDogData, loadHotDogData, showHotDogData, trainNet, results
+from HotDogModels import resnet50, cnn, EfficientNetB7
 
-# Import models
-from resnet50 import resnet50
-from cnn import cnn
-from EfficientNetB7 import EfficientNetB7
+SHOW_RESULTS = False
 
 # Check if we run on GPU
 device = checkDevice()
@@ -32,3 +29,6 @@ adam = torch.optim.Adam(model.parameters(), lr=0.1)
 
 # Train model
 model, train_acc, test_acc = trainNet(model, 5, sgd, train_loader, test_loader,trainset,testset, device)
+
+if(SHOW_RESULTS):
+    results(device, test_loader)
