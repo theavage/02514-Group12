@@ -1,6 +1,7 @@
 import torch
 from efficientnet_pytorch import EfficientNet
 import torch.nn as nn
+import torchvision.models as models
 
 def EfficientNetB7():
 
@@ -25,16 +26,16 @@ class cnn():#insert input
         out = self.convolutional(x)
         return out
 
-class resnet50():#insert input
-    def __init__(self):
-        super(self).__init__()
-        self.convolutional = (
-                ...,
-                ...,
-                ...,
-                ...)
+def resnet50():#insert input
+    model = models.resnet50(pretrained=True)
 
-
-    def forward(self, x):
-        out = x
-        return out
+    #If requires_grad is set to false: freezing the part of the model as no changes happen to its parameters. 
+    for param in model.parameters():
+        param.requires_grad = False   
+        
+    model.fc = nn.Sequential(
+                nn.Linear(2048, 128),
+                nn.ReLU(inplace=True),
+                nn.Linear(128, 2))
+    
+    return model
