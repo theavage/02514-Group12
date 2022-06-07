@@ -149,15 +149,16 @@ def trainNet(model, num_epochs, optimizer, criterion, train_loader, test_loader,
 
 
 def plot_graphs(out_dict, name):
-
+    plt.figure()
     plt.plot(out_dict['train_loss'],'-o')
     plt.plot(out_dict['train_acc'],'-o')
     plt.legend(('Train error','Train accuracy'))
     plt.xlabel('Epoch number')
     plt.ylabel('Accuracy')
-    plt.show()
     plt.savefig("images/train_" + name + ".png")
-
+    plt.show()
+    
+    plt.figure()
     plt.plot(out_dict['test_loss'],'-o')
     plt.plot(out_dict['test_acc'],'-o')
     plt.legend(('Test error','Test accuracy'))
@@ -167,17 +168,12 @@ def plot_graphs(out_dict, name):
     plt.savefig("images/test_" + name + ".png")
 
 
-def saliency_map(device, test_loader, model_path):
+def saliency_map(device, image, model_path, name):
 
     model = torch.load(model_path)
     model = model.to(device)
 
     model.eval()
-
-    i = randint(0, 10)
-    print("Chosen image ", i, "from the test set")
-    images, labels = next(iter(test_loader))
-    image = images[i]
 
     image = image.to(device)
     image.requires_grad_()
@@ -205,4 +201,4 @@ def saliency_map(device, test_loader, model_path):
     plt.tight_layout()
     fig.suptitle('The Image and Its Saliency Map')
     plt.show()
-
+    plt.savefig("images/map_" + name + ".png")

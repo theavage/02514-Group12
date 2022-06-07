@@ -1,33 +1,40 @@
+
 import torch
 from efficientnet_pytorch import EfficientNet
 import torch.nn as nn
 import torchvision.models as models
 
-def EfficientNetB7():
+def createEfficientNetB7():
 
-    model = EfficientNet.from_name('efficientnet-b7')
-    #model = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=False)
-    num_ftrs = model._fc.in_features
-    model._fc = nn.Linear(num_ftrs, 1)
-    #num_classes =1
-    #model.fc = nn.Linear(512, num_classes)
-
+    model = EfficientNet.from_pretrained('efficientnet-b7')
+    model._fc= torch.nn.Linear(in_features=model._fc.in_features, out_features=2, bias=True)
     return model
 
-class cnn(nn.Module):#insert input
+class cnn(nn.Module):
     def __init__(self):
-        super(self,cnn).__init__()
+        super(cnn,self).__init__()
         self.convolutional = nn.Sequential(
-                nn.Conv2d(128*128,128 , kernel_size=3, padding='same'),
-                nn.ReLU(),
-                nn.Conv2d(128,1, kernel_size=3, padding='same'),
-                nn.ReLU())
+            nn.Conv2d(in_channels=3, out_channels=10, kernel_size=3),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(10, 20, kernel_size=3),
+            nn.Dropout2d()
+        )
+
+        self.fully_connected = nn.Sequential(
+            nn.Linear(74420, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 2),
+            nn.Softmax(dim=1)
+        )
 
     def forward(self, x):
-        out = self.convolutional(x)
-        return out
+        x = self.convolutional(x)
+        x = x.view(x.size(0),-1)
+        x = self.fully_connected(x)
+        return x
 
-def resnet50():#insert input
+def createResNet50():#insert input
     model = models.resnet50(pretrained=True)
 
     #If requires_grad is set to false: freezing the part of the model as no changes happen to its parameters. 
