@@ -28,10 +28,29 @@ def showHotDogData(train_loader):
         plt.title(['hotdog', 'not hotdog'][labels[i].item()])
         plt.axis('off')
 
+def augmentedTransform(size):
+    train_transform = transforms.Compose([
+                                        transforms.Resize((size, size)),
+                                        transforms.Pad(8),
+                                        transforms.RandomRotation(180),  # .05 rad
+                                        transforms.ColorJitter(hue=.05, saturation=.05),
+                                        transforms.ToTensor()])
+    test_transform = transforms.Compose([
+                                        transforms.Resize((size, size)),
+                                        transforms.Pad(8),
+                                        transforms.RandomRotation(180),  # .05 rad
+                                        transforms.ColorJitter(hue=.05, saturation=.05),
+                                        transforms.ToTensor()])
 
-def loadHotDogData(size, batch_size):
-    train_transform = transforms.Compose([transforms.Resize((size, size)), transforms.ToTensor()])
-    test_transform = transforms.Compose([transforms.Resize((size, size)), transforms.ToTensor()])
+    return train_transform, test_transform
+
+def loadHotDogData(size, batch_size, isAugmented):
+    if isAugmented:
+        train_transform, test_transform = augmentedTransform(size)
+    else:
+        train_transform = transforms.Compose([transforms.Resize((size, size)), transforms.ToTensor()])
+        test_transform = transforms.Compose([transforms.Resize((size, size)), transforms.ToTensor()])
+
     trainset = Hotdog_NotHotdog(train=True, transform=train_transform)
     train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=3)
     testset = Hotdog_NotHotdog(train=False, transform=test_transform)

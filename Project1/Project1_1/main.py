@@ -12,7 +12,9 @@ from EfficientNetB7 import EfficientNetB7
 device = checkDevice()
 
 # Load data
-train_loader, test_loader, trainset, testset = loadHotDogData(128, 64)
+# Check if it is augmented
+isAugmented = True
+train_loader, test_loader, trainset, testset = loadHotDogData(128, 64, isAugmented)
 
 # Show data
 showHotDogData(train_loader)
