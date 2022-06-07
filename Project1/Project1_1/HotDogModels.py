@@ -4,22 +4,23 @@ import torch.nn as nn
 
 def EfficientNetB7():
 
-    #model = EfficientNet.from_name('efficientnet-b7')
-    model = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=False)
-    num_classes =1
-    model.fc = nn.Linear(512, num_classes)
+    model = EfficientNet.from_name('efficientnet-b7')
+    #model = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=False)
+    num_ftrs = model._fc.in_features
+    model._fc = nn.Linear(num_ftrs, 1)
+    #num_classes =1
+    #model.fc = nn.Linear(512, num_classes)
 
     return model
 
-class cnn():#insert input
+class cnn(nn.Module):#insert input
     def __init__(self):
-        super(self).__init__()
+        super(self,cnn).__init__()
         self.convolutional = nn.Sequential(
-                nn.Conv2d(3,8 , kernel_size=3, padding='same'),
+                nn.Conv2d(128*128,128 , kernel_size=3, padding='same'),
                 nn.ReLU(),
-                nn.Conv2d(8,16 , kernel_size=3, padding='same'),
+                nn.Conv2d(128,1, kernel_size=3, padding='same'),
                 nn.ReLU())
-
 
     def forward(self, x):
         out = self.convolutional(x)
