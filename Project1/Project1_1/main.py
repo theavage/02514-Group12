@@ -1,12 +1,7 @@
 import torch
 
 from HotDogUtils import checkDevice, loadHotDogData, loadHotDogData, showHotDogData, trainNet, results
-# from HotDogModels import ...
-
-# Import models
-from resnet50 import resnet50
-from cnn import cnn
-from EfficientNetB7 import EfficientNetB7
+from HotDogModels import resnet50, cnn, EfficientNetB7
 
 SHOW_RESULTS = False
 
