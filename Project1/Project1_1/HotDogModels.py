@@ -10,17 +10,28 @@ def createEfficientNetB7():
     return model
 
 class cnn(nn.Module):#insert input
-    def __init__(self):
-        super(self,cnn).__init__()
+    def _init_(self):
+        super(cnn,self)._init_()
         self.convolutional = nn.Sequential(
-                nn.Conv2d(128*128,128 , kernel_size=3, padding='same'),
-                nn.ReLU(),
-                nn.Conv2d(128,1, kernel_size=3, padding='same'),
-                nn.ReLU())
+            nn.Conv2d(in_channels=3, out_channels=10, kernel_size=3),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(10, 20, kernel_size=3),
+            nn.Dropout2d()
+        )
+
+        self.fully_connected = nn.Sequential(
+            nn.Linear(74420, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 2),
+            nn.Softmax(dim=1)
+        )
 
     def forward(self, x):
-        out = self.convolutional(x)
-        return out
+        x = self.convolutional(x)
+        x = x.view(x.size(0),-1)
+        x = self.fully_connected(x)
+        return x
 
 def createResNet50():#insert input
     model = models.resnet50(pretrained=True)
