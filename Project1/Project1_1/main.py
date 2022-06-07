@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from HotDogUtils import checkDevice, loadHotDogData, loadHotDogData, showHotDogData, trainNet, saliency_map, plot_graphs
-from HotDogModels import resnet50, cnn, EfficientNetB7
+from HotDogModels import createEfficientNetB7
 
 SHOW_RESULTS = False
 isAugmented = False
@@ -24,11 +24,8 @@ train_loader, test_loader, trainset, testset = loadHotDogData(128, 64, isAugment
 showHotDogData(train_loader)
 
 # Load model
-model = resnet50
-model = model()
+model = createEfficientNetB7()
 model.to(device)
-
-print(model)
 
 # Optimizers
 sgd = torch.optim.SGD(model.parameters(), lr=0.1)
@@ -45,5 +42,4 @@ torch.save(model, model_path)
 
 plot_graphs(out_dict, name)
 
-if(SHOW_RESULTS):
-    saliency_map(device, test_loader, model_path)
+if SHOW_RESULTS: saliency_map(device, test_loader, model_path)

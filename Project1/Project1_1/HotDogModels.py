@@ -3,15 +3,10 @@ from efficientnet_pytorch import EfficientNet
 import torch.nn as nn
 import torchvision.models as models
 
-def EfficientNetB7():
+def createEfficientNetB7():
 
-    model = EfficientNet.from_name('efficientnet-b7')
-    #model = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_efficientnet_b0', pretrained=False)
-    num_ftrs = model._fc.in_features
-    model._fc = nn.Linear(num_ftrs, 1)
-    #num_classes =1
-    #model.fc = nn.Linear(512, num_classes)
-
+    model = EfficientNet.from_pretrained('efficientnet-b7')
+    model._fc= torch.nn.Linear(in_features=model._fc.in_features, out_features=2, bias=True)
     return model
 
 class cnn(nn.Module):#insert input
@@ -27,7 +22,7 @@ class cnn(nn.Module):#insert input
         out = self.convolutional(x)
         return out
 
-def resnet50():#insert input
+def createResNet50():#insert input
     model = models.resnet50(pretrained=True)
 
     #If requires_grad is set to false: freezing the part of the model as no changes happen to its parameters. 
