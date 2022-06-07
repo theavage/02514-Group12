@@ -9,7 +9,7 @@ def createEfficientNetB7():
     model._fc= torch.nn.Linear(in_features=model._fc.in_features, out_features=2, bias=True)
     return model
 
-class cnn(nn.Module):#insert input
+class cnn(nn.Module):
     def _init_(self):
         super(cnn,self)._init_()
         self.convolutional = nn.Sequential(

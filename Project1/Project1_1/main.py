@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torchmetrics import HingeLoss
 from PIL import Image
+import numpy as np
 
 from HotDogUtils import checkDevice, loadHotDogData, loadHotDogData, showHotDogData, trainNet, saliency_map, plot_graphs
 from HotDogModels import createResNet50, cnn, createEfficientNetB7
@@ -10,7 +11,8 @@ SHOW_RESULTS = False
 isAugmented = False
 
 name = "modelBLABLABLA.pt"
-# ARCHITECTURE_OPTIMIZER_LOSS_EPOCHS_DA_BN.pt
+# ARCHITECTURE_OPTIMIZER_LOSS_EPOCHS_DA.pt
+name_np = "models/modelBLABLABLA"
 path = "models/"
 model_path = path + name
 print(model_path)
@@ -19,7 +21,7 @@ print(model_path)
 # Check if we run on GPU
 device = checkDevice()
 
-if (not SHOW_RESULTS):
+if (SHOW_RESULTS == False):
     
     # Load data
     # Check if it is augmented
@@ -35,18 +37,22 @@ if (not SHOW_RESULTS):
 
 
     # Optimizers
-    sgd = torch.optim.SGD(model.parameters(), lr=0.1)  
+    sgd = torch.optim.SGD(model.parameters(), lr=0.1)
     momentum = torch.optim.SGD(model.parameters(), lr=0.1, momentum=1) 
     adam = torch.optim.Adam(model.parameters(), lr=0.1)
 
     # Loss Functions
-    criterion = nn.CrossEntropyLoss()
+    ce = nn.CrossEntropyLoss()
     hinge = HingeLoss()
 
 
     # Train model
-    model, out_dict = trainNet(model, 10, sgd, criterion, train_loader, test_loader,trainset,testset, device)
+    model, out_dict = trainNet(model, 2, sgd, ce, train_loader, test_loader,trainset,testset, device)
     torch.save(model, model_path)
+
+    data = out_dict.items()
+    train_data = np.asarray(list(data))
+    np.save(name_np, train_data)
 
     plot_graphs(out_dict, name)
 
