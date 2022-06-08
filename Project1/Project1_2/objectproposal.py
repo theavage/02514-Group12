@@ -1,16 +1,9 @@
 import cv2
-from cv2.ximgproc.segmentation import createSelectiveSearchSegmentation
-
 
 def createObjectProposals(image):
 
-    # Propose object rectangles in an image by Selective Search
-
-    shape = (100, 100)
-    resized = cv2.resize(image, shape)
-
-    ss = createSelectiveSearchSegmentation()
-    ss.setBaseImage(resized)
+    ss = cv2.ximgproc.segmentation.createSelectiveSearchSegmentation()
+    ss.setBaseImage(image)
     ss.switchToSelectiveSearchFast()
     # ss.switchToSelectiveSearchQuality()
     rectangles = ss.process()
@@ -20,11 +13,6 @@ def createObjectProposals(image):
 
 def plotProposals(image, rectangles, n):
 
-    # Plot n proposed rectangles in an image
-    # All rectangles are plotted by n = -1
-
-    if n == -1: n = rectangles.shape[1]
-
     image_rectangles = image.copy()
     for i, rectangle in enumerate(rectangles):
         if i < n:
@@ -33,14 +21,17 @@ def plotProposals(image, rectangles, n):
 
     cv2.imshow("Object proposals", image_rectangles)
 
+def cropAndResize(image, rectangle, size):
+
+    x, y, w, h = rectangle
+    x1, y1 = x, y
+    x2, y2, = x + w, y + h
+    cropped = image[y1:y2, x1:x2]
+    resized = cv2.resize(cropped, size)
+    
+    return resized
 
 
-
-
-
-
-
-
-
-
-
+image = cv2.imread('testimage.jpeg')
+rects = createObjectProposals(image)
+print(rects)
