@@ -1,5 +1,6 @@
 import torch
 import cv2
+import json
 
 def checkDevice():
 
@@ -19,3 +20,10 @@ def cropAndResize(image, rectangle, size):
     resized = cv2.resize(cropped, size)
     
     return resized
+
+def loadDataset():
+    pass
+
+def loadImages():
+    
+    pass
