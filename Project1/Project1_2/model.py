@@ -13,7 +13,7 @@ def trainModel(model, trainloader, testloader, optimizer, criterion, num_epochs,
 
     out_dict = {'train_acc': [], 'test_acc': [], 'train_loss': [], 'test_loss': []}
 
-    for _ in range(num_epochs):
+    for e in range(num_epochs):
         model.train()
         train_correct = 0
         train_total = 0
@@ -47,5 +47,7 @@ def trainModel(model, trainloader, testloader, optimizer, criterion, num_epochs,
         out_dict['test_acc'].append(test_correct/test_total)
         out_dict['train_loss'].append(np.mean(train_loss))
         out_dict['test_loss'].append(np.mean(test_loss))
+
+        print('Epoch ' + str(e) + ', training accuracy: ' + str(out_dict['train_acc'][-1]) + ', test accuracy: ' + str(out_dict['test_acc'][-1]))
 
     return model, out_dict

@@ -20,8 +20,6 @@ def checkDevice():
     
     return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-checkDevice()
-
 def cropAndResize(image, rectangle, size):
 
     x, y, w, h = rectangle
@@ -45,11 +43,15 @@ class dataset(torch.utils.data.Dataset):
          return self.transform(self.data[idx, :, :, :]), self.transform(self.targets[idx])
 
 def createDataSet(images, indices, classes, groundtruth, ids):
+    X = np.empty((0, 224, 224, 3))
+    y = np.empty((0, 0))
     for id in ids:
         mask = indices == id
-        im = images[mask, :, :, :]
+        im_data = images[id]
+        im = np.asarray(Image.open('/dtu/datasets1/02514/data_wastedetection' + '/' + im_data['file_name']))
         gts = groundtruth[mask, :]
         cls = classes[mask]
+        cls = np.append(0, cls)
 
         rects = createObjectProposals(im)
         rects, gts = torch.as_tensor(rects), torch.as_tensor(gts)
@@ -63,7 +65,7 @@ def createDataSet(images, indices, classes, groundtruth, ids):
         X_temp = np.empty((0, 224, 224, 3))
         for rect in rects:
             im_temp = cropAndResize(im, rect, size)
-            X_temp = np.concatenate(X, im_temp, axis=0)
+            X_temp = np.concatenate(X_temp, im_temp, axis=0)
 
         n_total = len(y_temp)
         n_object = np.count_nonzero(y_temp)
@@ -96,7 +98,7 @@ def loadDataset():
         anns = dataset['annotations']
         img_ids = []
         bb = []
-        y = [] 
+        y = []
         for annotation in anns: 
             img_ids.append(annotation['image_id'])
             bb.append(annotation['bbox'])
@@ -194,7 +196,6 @@ def save_data():
         np.save(f, test_id)
         np.save(f, val_id)
 
-    
-save_data()
-
-
+def loadData():
+    data = np.load('/zhome/df/9/164401/02514-Group12/Project1/Project1_2/data.npz', allow_pickle = True)
+    return data['train_ids'], data['val_ids'], data['test_ids'], data['ids'], data['gt'], data['y'], data['ims']

@@ -4,7 +4,8 @@ def createObjectProposals(image):
 
     ss = cv2.ximgproc.segmentation.createSelectiveSearchSegmentation()
     ss.setBaseImage(image)
-    ss.switchToSelectiveSearchFast()
+    ss.switchToSingleStrategy()
+    # ss.switchToSelectiveSearchFast()
     # ss.switchToSelectiveSearchQuality()
     rectangles = ss.process()
 
