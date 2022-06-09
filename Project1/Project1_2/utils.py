@@ -8,7 +8,6 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 import torchvision
 import torchvision.transforms as transforms
-
 from objectproposal import *
 
 
@@ -103,11 +102,7 @@ def loadDataset():
             bb.append(annotation['bbox'])
             y.append(annotation['category_id'])
 
-    return img_ids, bb, y, imgs, categories
-
-img_ids, bb, y, imgs, categories = loadDataset()
-
-def cat_to_supercat(y, categories):
+    #Converting categories into supercategories
     super_cats = {'bg':0,'Aluminium foil':1, 'Battery':2 ,'Blister pack':3, 'Bottle':4,'Bottle cap':5,'Broken glass':6,'Can':7,'Carton':8,'Cup':9,'Food waste':10,'Glass jar':11,'Lid':12,'Other plastic':13,'Paper':14,'Paper bag':15,'Plastic bag & wrapper':16,'Plastic container':17,'Plastic glooves':18,'Plastic utensils':19,'Pop tab':20,'Rope & strings':21,'Scrap metal':22,'Shoe':23,'Squeezable tube':24,'Straw':25,'Styrofoam piece':26,'Unlabeled litter':27,'Cigarette':28}
     merged_y = []
     for i in y:
@@ -115,11 +110,11 @@ def cat_to_supercat(y, categories):
             if i == x['id']:
                 merged_y.append(super_cats[x['supercategory']])
     y = merged_y
-    return y
 
-y = cat_to_supercat(y,categories)
+    return img_ids, bb, y, imgs
 
-def loadImages(imgs):
+def loadImages():
+    _,_,_,imgs = loadDataset()
     img_ids = list(range(0,1500))
     actual_images = []
     for id in img_ids:
@@ -130,17 +125,16 @@ def loadImages(imgs):
 
     return actual_images
 
-actual_images = loadImages(imgs)
-
 def get_split_vector():
     img_ids = list(range(0,1500))
     np.random.shuffle(img_ids)
     train,val,test = img_ids[0:1050],img_ids[1050:1275],img_ids[1275:] #70,15,15 split:-)!!!
     return train,val,test
 
-train,val,test = get_split_vector()
-
-def dataset_split(train, val, test,y,bb,actual_images,img_ids):
+def dataset_split():
+    img_ids, bb, y, _ = loadDataset()
+    actual_images = loadImages()
+    train,val,test = get_split_vector()
     X_train = []
     y_train = []
     bb_train = []
@@ -175,18 +169,32 @@ def dataset_split(train, val, test,y,bb,actual_images,img_ids):
 
     return X_train, y_train, bb_train, X_val, y_val, bb_val, X_test, y_test, bb_test
         
+def save_data():
+    _, y_train, bb_train, _, y_val, bb_val, _, y_test, bb_test = dataset_split()
+    train_id,test_id,val_id = get_split_vector()
+    
+    bb_train = np.asarray(bb_train)
+    y_train = np.asarray(y_train)
+    bb_test = np.asarray(bb_test)
+    y_test = np.asarray(y_test)
+    bb_val = np.asarray(bb_val)
+    y_val = np.asarray(y_val)
+    train_id = np.asarray(train_id)
+    test_id = np.asarray(test_id)
+    val_id = np.asarray(val_id)
 
-X_train, y_train, bb_train, X_val, y_val, bb_val, X_test, y_test, bb_test = dataset_split(train, val, test,y,bb,actual_images,img_ids)
+    with open('data.npy','wb') as f:
+        np.save(f, bb_train)
+        np.save(f, bb_test)
+        np.save(f, bb_val)
+        np.save(f, y_train)
+        np.save(f, y_test)
+        np.save(f, y_val)
+        np.save(f, train_id)
+        np.save(f, test_id)
+        np.save(f, val_id)
 
-bb_train = np.asarray(bb_train)
-y_train = np.asarray(y_train)
-bb_test = np.asarray(bb_test)
-y_test = np.asarray(y_test)
-bb_val = np.asarray(bb_val)
-y_val = np.asarray(y_val)
+    
+save_data()
 
-
-np.save('train_data.npy', bb_train,y_train)
-np.save('test_data.npy', bb_test,y_test)
-np.save('val_data.npy', bb_val,y_val)
 
