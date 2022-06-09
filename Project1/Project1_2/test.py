@@ -4,15 +4,15 @@ import torchvision
 
 from utils import *
 from model import *
-from trainmodel import *
 from objectproposal import *
 
 test_images = 0
 test_image_ids = 0
 test_classes, test_rectangles = np.empty(0), np.empty(0)
 
-path = ''
-model = torch.load(path)
+path = '/zhome/df/9/164401/02514-Group12/Project1/Project1_2/model.pt'
+model = createModel()
+model.load_state_dict(torch.load(path))
 
 for id, im in zip(test_image_ids, test_images):
     rectangles = createObjectProposals(im)
