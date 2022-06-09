@@ -6,6 +6,10 @@ import csv
 from PIL import Image, ExifTags
 import numpy as np
 from sklearn.model_selection import train_test_split
+import torchvision
+import torchvision.transforms as transforms
+
+from objectproposal import *
 
 
 def checkDevice():
@@ -28,6 +32,59 @@ def cropAndResize(image, rectangle, size):
     resized = cv2.resize(cropped, size)
     
     return resized
+
+class dataset(torch.utils.data.Dataset):
+    def __init__(self, X, y, transform = transforms.ToTensor()):
+         self.transform = transform
+         self.data = X
+         self.targets = y
+
+    def __len__(self):
+         return len(self.image_paths)
+
+    def __getitem__(self, idx):
+         return self.transform(self.data[idx, :, :, :]), self.transform(self.targets[idx])
+
+def createDataSet(images, indices, classes, groundtruth, ids):
+    for id in ids:
+        mask = indices == id
+        im = images[mask, :, :, :]
+        gts = groundtruth[mask, :]
+        cls = classes[mask]
+
+        rects = createObjectProposals(im)
+        rects, gts = torch.as_tensor(rects), torch.as_tensor(gts)
+        iou = torchvision.ops.box_iou(rects, gts)
+        iou = np.asarray(iou)
+
+        gts_id = iou.argmax(axis=1)
+        y_temp = cls[gts_id]
+
+        size = (224, 224)
+        X_temp = np.empty((0, 224, 224, 3))
+        for rect in rects:
+            im_temp = cropAndResize(im, rect, size)
+            X_temp = np.concatenate(X, im_temp, axis=0)
+
+        n_total = len(y_temp)
+        n_object = np.count_nonzero(y_temp)
+        object_ids = np.nonzero(y_temp)
+        n_background = np.minimum(3 * n_object, n_total - n_object)
+        background_ids = np.nonzero(y_temp == 0)
+        choice = np.random.choice(background_ids, n_background)
+
+        take = np.zeros_like(y_temp)
+        take[object_ids or choice] = True
+
+        X = np.concatenate(X, X_temp[take, :, :, :], axis=0)
+        y = np.concatenate(y, y_temp[take])
+
+        for gt, cl in zip(gts, cls):
+            im_temp = cropAndResize(im, gt, size)
+            X = np.concatenate(X, im_temp, axis=0)
+            y = np.concatenate(y, cl)
+
+        return dataset(X, y)
 
 def loadDataset():
     dataset_path = '/dtu/datasets1/02514/data_wastedetection/'
@@ -132,3 +189,4 @@ y_val = np.asarray(y_val)
 np.save('train_data.npy', bb_train,y_train)
 np.save('test_data.npy', bb_test,y_test)
 np.save('val_data.npy', bb_val,y_val)
+
