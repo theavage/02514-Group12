@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 import torchvision
 import torchvision.transforms as transforms
 from objectproposal import *
+from PIL import Image
 
 
 def checkDevice():
@@ -26,7 +27,7 @@ def cropAndResize(image, rectangle, size):
     x1, y1 = x, y
     x2, y2, = x + w, y + h
     cropped = image[y1:y2, x1:x2]
-    resized = cv2.resize(cropped, size)
+    resized = cv2.resize(cropped, size, cv2.INTER_NEAREST)
     
     return resized
 
@@ -53,7 +54,8 @@ def createDataSet(images, indices, classes, groundtruth, ids):
         cls = classes[mask]
         cls = np.append(0, cls)
 
-        rects = createObjectProposals(im)
+        rects = createObjectProposals(np.asarray(im))
+        # rects = rects[:2000, :]
         rects, gts = torch.as_tensor(rects), torch.as_tensor(gts)
         iou = torchvision.ops.box_iou(rects, gts)
         iou = np.asarray(iou)
@@ -65,7 +67,8 @@ def createDataSet(images, indices, classes, groundtruth, ids):
         X_temp = np.empty((0, 224, 224, 3))
         for rect in rects:
             im_temp = cropAndResize(im, rect, size)
-            X_temp = np.concatenate(X_temp, im_temp, axis=0)
+            im_temp = np.expand_dims(np.asarray(im_temp), axis = 0)
+            X_temp = np.concatenate([X_temp, im_temp], axis=0)
 
         n_total = len(y_temp)
         n_object = np.count_nonzero(y_temp)
