@@ -12,15 +12,15 @@ valset = createDataSet(images, indices, classes, groundtruth, val_ids)
 
 model = createModel()
 optimizer = torch.optim.Adam(model.parameters(), lr = 0.1)
-criterion = nn.MSELoss()
+criterion = nn.CrossEntropyLoss()
 batch_size = 32
-num_epochs = 10
+num_epochs = 100
 
 batch_size = 32
 trainloader, valloader = DataLoader(trainset, batch_size=batch_size), DataLoader(valset, batch_size=batch_size)
 
 device = checkDevice()
-model = trainModel(model, trainloader, valloader, optimizer, criterion, num_epochs, device)
+model, hist = trainModel(model, trainloader, valloader, optimizer, criterion, num_epochs, device)
 
 path = '/zhome/df/9/164401/02514-Group12/Project1/Project1_2/model.pt'
 torch.save(model.state_dict(), path)

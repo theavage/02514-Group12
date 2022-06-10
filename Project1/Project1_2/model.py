@@ -19,10 +19,10 @@ def trainModel(model, trainloader, testloader, optimizer, criterion, num_epochs,
         train_total = 0
         train_loss = []
         for data, target in trainloader:
-            data, target = data.to(device), data.to(device)
+            data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             output = model(data)
-            loss = criterion(output, target)
+            loss = criterion(output, target.long())
             loss.backward()
             optimizer.step()
             train_loss.append(loss.item())
@@ -37,7 +37,7 @@ def trainModel(model, trainloader, testloader, optimizer, criterion, num_epochs,
         for data, target in testloader:
             data, target = data.to(device), target.to(device)
             with torch.no_grad(): output = model(data)
-            loss = criterion(output, target)
+            loss = criterion(output, target.long())
             test_loss.append(loss.item())
             predicted = output.argmax(1)
             test_correct += (target==predicted).sum().cpu().item()
@@ -48,6 +48,6 @@ def trainModel(model, trainloader, testloader, optimizer, criterion, num_epochs,
         out_dict['train_loss'].append(np.mean(train_loss))
         out_dict['test_loss'].append(np.mean(test_loss))
 
-        print('Epoch ' + str(e) + ', training accuracy: ' + str(out_dict['train_acc'][-1]) + ', test accuracy: ' + str(out_dict['test_acc'][-1]))
+        print('Epoch ' + str(e+1) + ', training accuracy: ' + str(out_dict['train_acc'][-1]) + ', test accuracy: ' + str(out_dict['test_acc'][-1]))
 
     return model, out_dict

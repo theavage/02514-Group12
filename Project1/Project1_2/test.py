@@ -1,35 +1,49 @@
 import numpy as np
 import torch
 import torchvision
+from torch.utils.data import DataLoader
 
 from utils import *
 from model import *
 from objectproposal import *
 
-test_images = 0
-test_image_ids = 0
+_, _, test_ids, indices, groundtruth, classes, images = loadData()
+
 test_classes, test_rectangles = np.empty(0), np.empty(0)
 
 path = '/zhome/df/9/164401/02514-Group12/Project1/Project1_2/model.pt'
 model = createModel()
 model.load_state_dict(torch.load(path))
 
-for id, im in zip(test_image_ids, test_images):
-    rectangles = createObjectProposals(im)
-    classes, scores = np.empty(0), np.empty(0)
+device = checkDevice()
+model.to(device)
+model.eval()
+
+for id, im_data in zip(test_ids, images):
+    im = Image.open('/dtu/datasets1/02514/data_wastedetection' + '/' + im_data['file_name'])
+    rects = edgeBoxDetection(im)
+    classes, scores = np.array([]), np.array([])
     
-    for rect in rectangles:
-        size = (224, 224)
-        input = cropAndResize(im, rect, size)
-        input = torch.as_tensor(input)
+    input = torch.empty((0, 3, 224, 224))
+    proposal_images = []
+    for rect in transformBoundingBox(rects):
+        l, t, r, b = rect
+        cropped = torchvision.transforms.functional.crop(im, l, t, r, b)
+        proposal_images.append(cropped)
+    
+    dataset = testDataset(proposal_images)
+    dataloader = DataLoader(dataset, batch_size=16)
+    for input in dataloader:
+        input.to(device)
         output = model(input)
         s, c = torch.max(output, 1)
-        classes = np.append(classes, c)
-        scores = np.append(scores, s)
+        classes = np.append(classes, c.detach().numpy())
+        scores = np.append(scores, s.detach().numpy())
 
-    object_indices, _ = np.nonzero(classes)
+    object_indices = np.nonzero(classes)
+    object_indices = object_indices[0]
     object_classes = classes[object_indices]
-    object_rectangles = rectangles[object_indices, :]
+    object_rectangles = rects[object_indices, :]
     object_scores = scores[object_indices]
 
     final_classes, final_rectangles = np.empty(0), np.empty(0)

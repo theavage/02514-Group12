@@ -1,15 +1,12 @@
-from tkinter import image_names
 import torch
-import cv2
 import json
-import csv
-from PIL import Image, ExifTags
+from PIL import Image
 import numpy as np
-from sklearn.model_selection import train_test_split
 import torchvision
 import torchvision.transforms as transforms
 from objectproposal import *
 from PIL import Image
+import numpy as np
 
 
 def checkDevice():
@@ -21,74 +18,86 @@ def checkDevice():
     
     return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def cropAndResize(image, rectangle, size):
+def crop(image, rectangle):
 
     x, y, w, h = rectangle
     x1, y1 = x, y
-    x2, y2, = x + w, y + h
+    x2, y2 = x + w, y + h
     cropped = image[y1:y2, x1:x2]
-    resized = cv2.resize(cropped, size, cv2.INTER_NEAREST)
     
-    return resized
+    return cropped
+
+def transformBoundingBox(rects):
+    x, y, w, h = rects[:, 0], rects[:, 1], rects[:, 2], rects[:, 3]
+    x1, x2, y1, y2 = x, x + w, y, y + h
+    x1, x2, y1, y2 = np.atleast_2d(x1).T, np.atleast_2d(x2).T, np.atleast_2d(y1).T, np.atleast_2d(y2).T
+    return np.hstack([x1, y1, x2, y2])
 
 class dataset(torch.utils.data.Dataset):
-    def __init__(self, X, y, transform = transforms.ToTensor()):
-         self.transform = transform
-         self.data = X
-         self.targets = y
+    def __init__(self, X, y):
+        size = (224, 224)
+        self.transform = transforms.Compose([transforms.Resize(size), transforms.ToTensor()])
+        self.data = X
+        self.targets = y
 
     def __len__(self):
-         return len(self.image_paths)
+        return len(self.targets)
 
     def __getitem__(self, idx):
-         return self.transform(self.data[idx, :, :, :]), self.transform(self.targets[idx])
+        return self.transform(self.data[idx]), self.targets[idx]
+
+class testDataset(torch.utils.data.Dataset):
+    def __init__(self, X):
+        size = (224, 224)
+        self.transform = transforms.Compose([transforms.Resize(size), transforms.ToTensor()])
+        self.data = X
+
+    def __len__(self):
+        return len(self.data)
+    
+    def __getitem__(self, idx):
+        return self.transform(self.data[idx])
 
 def createDataSet(images, indices, classes, groundtruth, ids):
-    X = np.empty((0, 224, 224, 3))
-    y = np.empty((0, 0))
+    X = []
+    y = np.array([])
     for id in ids:
         mask = indices == id
         im_data = images[id]
         im = np.asarray(Image.open('/dtu/datasets1/02514/data_wastedetection' + '/' + im_data['file_name']))
         gts = groundtruth[mask, :]
         cls = classes[mask]
-        cls = np.append(0, cls)
 
-        rects = createObjectProposals(np.asarray(im))
-        # rects = rects[:2000, :]
+        rects = edgeBoxDetection(im)
+        rects, gts = transformBoundingBox(rects), transformBoundingBox(gts)
         rects, gts = torch.as_tensor(rects), torch.as_tensor(gts)
         iou = torchvision.ops.box_iou(rects, gts)
         iou = np.asarray(iou)
 
         gts_id = iou.argmax(axis=1)
-        y_temp = cls[gts_id]
-
-        size = (224, 224)
-        X_temp = np.empty((0, 224, 224, 3))
-        for rect in rects:
-            im_temp = cropAndResize(im, rect, size)
-            im_temp = np.expand_dims(np.asarray(im_temp), axis = 0)
-            X_temp = np.concatenate([X_temp, im_temp], axis=0)
+        gts_scores = iou.max(axis=1)
+        threshold = 0.5
+        gts_mask = gts_scores > threshold
+        y_temp = gts_mask * cls[gts_id]
 
         n_total = len(y_temp)
         n_object = np.count_nonzero(y_temp)
         object_ids = np.nonzero(y_temp)
         n_background = np.minimum(3 * n_object, n_total - n_object)
         background_ids = np.nonzero(y_temp == 0)
-        choice = np.random.choice(background_ids, n_background)
+        choice = np.random.choice(background_ids[0], n_background)
 
-        take = np.zeros_like(y_temp)
-        take[object_ids or choice] = True
+        temp_mask = np.hstack([object_ids[0], choice])
+        y = np.concatenate([y, y_temp[temp_mask]])
+        rects_taken = rects[temp_mask, :]
 
-        X = np.concatenate(X, X_temp[take, :, :, :], axis=0)
-        y = np.concatenate(y, y_temp[take])
+        for rect in rects_taken: X.append(Image.fromarray(crop(im, rect)))
 
-        for gt, cl in zip(gts, cls):
-            im_temp = cropAndResize(im, gt, size)
-            X = np.concatenate(X, im_temp, axis=0)
-            y = np.concatenate(y, cl)
+        for gt, cl in zip(np.asarray(gts).astype(int), cls):
+            X.append(Image.fromarray(crop(im, gt)))
+            y = np.append(y, cl)
 
-        return dataset(X, y)
+    return dataset(X, y)
 
 def loadDataset():
     dataset_path = '/dtu/datasets1/02514/data_wastedetection/'
@@ -202,3 +211,9 @@ def save_data():
 def loadData():
     data = np.load('/zhome/df/9/164401/02514-Group12/Project1/Project1_2/data.npz', allow_pickle = True)
     return data['train_ids'], data['val_ids'], data['test_ids'], data['ids'], data['gt'], data['y'], data['ims']
+
+def oneHotEncode(classes):
+    output = np.zeros((len(classes), 29))
+    for i, c in enumerate(classes.astype(int)):
+        output[i, c] = 1
+    return output
