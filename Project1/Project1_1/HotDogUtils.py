@@ -156,7 +156,7 @@ def plot_graphs(out_dict, name):
     plt.xlabel('Epoch number')
     plt.ylabel('Accuracy')
     plt.savefig("images/train_" + name + ".png")
-    plt.show()
+    # plt.show()
     
     plt.figure()
     plt.plot(out_dict['test_loss'],'-o')
@@ -164,7 +164,7 @@ def plot_graphs(out_dict, name):
     plt.legend(('Test error','Test accuracy'))
     plt.xlabel('Epoch number')
     plt.ylabel('Accuracy')
-    plt.show()
+    # plt.show()
     plt.savefig("images/test_" + name + ".png")
 
 

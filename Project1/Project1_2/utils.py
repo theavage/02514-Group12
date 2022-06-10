@@ -7,6 +7,7 @@ import torchvision.transforms as transforms
 from objectproposal import *
 from PIL import Image
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def checkDevice():
@@ -212,8 +213,19 @@ def loadData():
     data = np.load('/zhome/df/9/164401/02514-Group12/Project1/Project1_2/data.npz', allow_pickle = True)
     return data['train_ids'], data['val_ids'], data['test_ids'], data['ids'], data['gt'], data['y'], data['ims']
 
-def oneHotEncode(classes):
-    output = np.zeros((len(classes), 29))
-    for i, c in enumerate(classes.astype(int)):
-        output[i, c] = 1
-    return output
+def plot_graphs(out_dict, name):
+    plt.figure()
+    plt.plot(out_dict['train_loss'],'-o')
+    plt.plot(out_dict['train_acc'],'-o')
+    plt.legend(('Train error','Train accuracy'))
+    plt.xlabel('Epoch number')
+    plt.ylabel('Accuracy')
+    plt.savefig(name)
+    
+    plt.figure()
+    plt.plot(out_dict['test_loss'],'-o')
+    plt.plot(out_dict['test_acc'],'-o')
+    plt.legend(('Test error','Test accuracy'))
+    plt.xlabel('Epoch number')
+    plt.ylabel('Accuracy')
+    plt.savefig(name)

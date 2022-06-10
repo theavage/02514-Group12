@@ -24,3 +24,8 @@ model, hist = trainModel(model, trainloader, valloader, optimizer, criterion, nu
 
 path = '/zhome/df/9/164401/02514-Group12/Project1/Project1_2/model.pt'
 torch.save(model.state_dict(), path)
+
+hist_data = hist.items()
+train_data = np.asarray(list(hist_data))
+np.save('/zhome/df/9/164401/02514-Group12/Project1/Project1_2/traindata.py', np.asarray(list(hist_data)))
+plot_graphs(hist, 'trainplots.png')
