@@ -12,7 +12,7 @@ _, _, test_ids, indices, groundtruth, gt_classes, images = loadData()
 
 test_classes, test_rectangles, test_scores = np.empty(0), np.empty(0), np.empty(0)
 
-path = '/zhome/df/9/164401/02514-Group12/Project1/Project1_2/model.pt'
+path = 'model.pt'
 model = createModel()
 model.load_state_dict(torch.load(path))
 
@@ -20,10 +20,14 @@ device = checkDevice()
 model.to(device)
 model.eval()
 
-for id, im_data in zip(test_ids, images):
+test_images = images[test_ids]
+
+for id, im_data in zip(test_ids, test_images):
     im = Image.open('/dtu/datasets1/02514/data_wastedetection' + '/' + im_data['file_name'])
     rects = edgeBoxDetection(im)
     classes, scores = np.array([]), np.array([])
+
+    print(1)
     
     input = torch.empty((0, 3, 224, 224))
     proposal_images = []
@@ -31,6 +35,8 @@ for id, im_data in zip(test_ids, images):
         l, t, r, b = rect
         cropped = torchvision.transforms.functional.crop(im, l, t, r, b)
         proposal_images.append(cropped)
+
+    print(2)
     
     dataset = testDataset(proposal_images)
     dataloader = DataLoader(dataset, batch_size=16)
@@ -41,13 +47,15 @@ for id, im_data in zip(test_ids, images):
         classes = np.append(classes, c.detach().numpy())
         scores = np.append(scores, s.detach().numpy())
 
+    print(3)
+
     object_indices = np.nonzero(classes)
     object_indices = object_indices[0]
     object_classes = classes[object_indices]
     object_rectangles = rects[object_indices, :]
     object_scores = scores[object_indices]
 
-    final_classes, final_rectangles, final_scores = np.empty(0), np.empty(0)
+    final_classes, final_rectangles, final_scores = np.empty(0), np.empty(0), np.empty(0)
 
     for i in set(object_classes):
         temp_classes = object_classes[i == object_classes]
@@ -66,6 +74,8 @@ for id, im_data in zip(test_ids, images):
         test_rectangles = np.append(test_rectangles, r, axis=0)
         test_ids = np.append(test_ids, id)
         test_scores = np.append(test_scores,s)
+
+    print(test_classes, test_rectangles)
 
 
 evaluate(test_rectangles,test_scores,test_classes,groundtruth,gt_classes)

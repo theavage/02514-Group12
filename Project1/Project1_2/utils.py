@@ -8,6 +8,8 @@ from objectproposal import *
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+import glob
 
 
 def checkDevice():
@@ -35,17 +37,22 @@ def transformBoundingBox(rects):
     return np.hstack([x1, y1, x2, y2])
 
 class dataset(torch.utils.data.Dataset):
-    def __init__(self, X, y):
+    def __init__(self, type):
         size = (224, 224)
         self.transform = transforms.Compose([transforms.Resize(size), transforms.ToTensor()])
-        self.data = X
-        self.targets = y
+        data_path = os.path.join('proposals/', type)
+        self.image_paths = glob.glob(data_path + '/*.jpeg')
+        self.targets = np.load('proposals/' + type + '/targets.npy')
 
     def __len__(self):
-        return len(self.targets)
+        return len(self.image_paths)
 
     def __getitem__(self, idx):
-        return self.transform(self.data[idx]), self.targets[idx]
+        image_path = self.image_paths[idx]
+        image = Image.open(image_path)
+        X = self.transform(image)
+        y = self.targets[idx]
+        return X, y
 
 class testDataset(torch.utils.data.Dataset):
     def __init__(self, X):
@@ -59,10 +66,11 @@ class testDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         return self.transform(self.data[idx])
 
-def createDataSet(images, indices, classes, groundtruth, ids):
+def createDataSet(images, indices, classes, groundtruth, ids, type):
     X = []
     y = np.array([])
-    for id in ids:
+    save_id = 1
+    for i, id in enumerate(ids):
         mask = indices == id
         im_data = images[id]
         im = np.asarray(Image.open('/dtu/datasets1/02514/data_wastedetection' + '/' + im_data['file_name']))
@@ -71,7 +79,7 @@ def createDataSet(images, indices, classes, groundtruth, ids):
 
         im, gts = resize(im, gts)
 
-        rects = edgeBoxDetection(im)
+        rects = edgeBoxDetection(im, 1000)
         rects, gts = transformBoundingBox(rects), transformBoundingBox(gts)
         rects, gts = torch.as_tensor(rects), torch.as_tensor(gts)
         iou = torchvision.ops.box_iou(rects, gts)
@@ -91,25 +99,30 @@ def createDataSet(images, indices, classes, groundtruth, ids):
         choice = np.random.choice(background_ids[0], n_background)
 
         temp_mask = np.hstack([object_ids[0], choice])
-        y = np.concatenate([y, y_temp[temp_mask]])
         rects_taken = rects[temp_mask, :]
 
-        for rect in rects_taken:
+        for rect, cl in zip(rects_taken, y_temp[temp_mask]):
+            savename = 'proposals/' + type + '/image' + str(save_id) + '.jpeg'
             try:
-                X.append(Image.fromarray(crop(im, rect)))
+                Image.fromarray(crop(im, rect)).save(savename)
+                save_id = save_id + 1
+                y = np.append(y, cl)
             except:
                 continue
+            
 
         for gt, cl in zip(np.asarray(gts).astype(int), cls):
+            savename = 'proposals/' + type + '/image' + str(save_id) + '.jpeg'
             try:
-                X.append(Image.fromarray(crop(im, gt)))
+                Image.fromarray(crop(im, gt)).save(savename)
+                save_id = save_id + 1
+                y = np.append(y, cl)
             except:
                 continue
-            y = np.append(y, cl)
 
-        print(id)
+        np.save('proposals/' + type + '/targets', y)
 
-    return dataset(X, y)
+        print(str(i + 1) + ' out of ' + str(len(ids)))
 
 def loadDataset():
     dataset_path = '/dtu/datasets1/02514/data_wastedetection/'
@@ -221,7 +234,7 @@ def save_data():
         np.save(f, val_id)
 
 def loadData():
-    data = np.load('/zhome/df/9/164401/02514-Group12/Project1/Project1_2/data.npz', allow_pickle = True)
+    data = np.load('data.npz', allow_pickle = True)
     return data['train_ids'], data['val_ids'], data['test_ids'], data['ids'], data['gt'], data['y'], data['ims']
 
 def plot_graphs(out_dict, name):
