@@ -69,6 +69,8 @@ def createDataSet(images, indices, classes, groundtruth, ids):
         gts = groundtruth[mask, :]
         cls = classes[mask]
 
+        im, gts = resize(im, gts)
+
         rects = edgeBoxDetection(im)
         rects, gts = transformBoundingBox(rects), transformBoundingBox(gts)
         rects, gts = torch.as_tensor(rects), torch.as_tensor(gts)
@@ -92,11 +94,20 @@ def createDataSet(images, indices, classes, groundtruth, ids):
         y = np.concatenate([y, y_temp[temp_mask]])
         rects_taken = rects[temp_mask, :]
 
-        for rect in rects_taken: X.append(Image.fromarray(crop(im, rect)))
+        for rect in rects_taken:
+            try:
+                X.append(Image.fromarray(crop(im, rect)))
+            except:
+                continue
 
         for gt, cl in zip(np.asarray(gts).astype(int), cls):
-            X.append(Image.fromarray(crop(im, gt)))
+            try:
+                X.append(Image.fromarray(crop(im, gt)))
+            except:
+                continue
             y = np.append(y, cl)
+
+        print(id)
 
     return dataset(X, y)
 
@@ -229,3 +240,18 @@ def plot_graphs(out_dict, name):
     plt.xlabel('Epoch number')
     plt.ylabel('Accuracy')
     plt.savefig(name)
+
+def resize(image, bb, size = 1000):
+    if image.shape[1] > image.shape[0]:
+        size = (size, int(size * image.shape[0] / image.shape[1]))
+    else:
+        size = (int(size * image.shape[1] / image.shape[0]), size)
+
+    img_resized = cv2.resize(image.copy(), size, interpolation = cv2.INTER_AREA)
+
+    lx = size[0] / image.shape[1]
+    ly = size[1] / image.shape[0]
+
+    bb_new = bb * np.array([[lx, ly, lx, ly]])
+
+    return img_resized, bb_new.astype(int)
