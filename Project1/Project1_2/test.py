@@ -2,14 +2,15 @@ import numpy as np
 import torch
 import torchvision
 from torch.utils.data import DataLoader
+from evaluation import evaluate
 
 from utils import *
 from model import *
 from objectproposal import *
 
-_, _, test_ids, indices, groundtruth, classes, images = loadData()
+_, _, test_ids, indices, groundtruth, gt_classes, images = loadData()
 
-test_classes, test_rectangles = np.empty(0), np.empty(0)
+test_classes, test_rectangles, test_scores = np.empty(0), np.empty(0), np.empty(0)
 
 path = '/zhome/df/9/164401/02514-Group12/Project1/Project1_2/model.pt'
 model = createModel()
@@ -46,7 +47,7 @@ for id, im_data in zip(test_ids, images):
     object_rectangles = rects[object_indices, :]
     object_scores = scores[object_indices]
 
-    final_classes, final_rectangles = np.empty(0), np.empty(0)
+    final_classes, final_rectangles, final_scores = np.empty(0), np.empty(0)
 
     for i in set(object_classes):
         temp_classes = object_classes[i == object_classes]
@@ -58,8 +59,13 @@ for id, im_data in zip(test_ids, images):
         final_indices = np.asarray(final_indices)
         final_classes = np.append(final_classes, temp_classes[final_indices])
         final_rectangles = np.append(final_rectangles, temp_rectangles[final_indices])
+        final_scores = np.append(final_scores, temp_scores[final_indices])
     
-    for c, r in zip(final_classes, final_rectangles):
+    for c, r, s in zip(final_classes, final_rectangles, final_scores):
         test_classes = np.append(test_classes, c)
         test_rectangles = np.append(test_rectangles, r, axis=0)
         test_ids = np.append(test_ids, id)
+        test_scores = np.append(test_scores,s)
+
+
+evaluate(test_rectangles,test_scores,test_classes,groundtruth,gt_classes)
